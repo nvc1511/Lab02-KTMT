@@ -1,0 +1,88 @@
+	.data
+str1: .space 100
+str2: .asciiz " "
+str3: .asciiz "Nhap chuoi: "
+	.text
+main:
+	li $v0, 4
+	la $a0, str3
+	syscall
+	li $v0, 8
+	la $a0, str1
+	li $a1, 100
+	syscall
+	jal check_brackets
+	add $s0, $zero, $v0
+	add $s1, $zero, $v1
+	li $v0, 1
+	add $a0, $zero, $s0
+	syscall
+	li $v0, 4
+	la $a0, str2
+	syscall
+	li $v0, 1
+	add $a0, $zero, $s1
+	syscall
+	li $v0, 10
+	syscall
+check_brackets:
+	move $t9, $sp #luu lai sp ban dau
+	la $a0, str1
+	li $t1, 0 #vi tri ki tu
+loop:
+	lb $t0, 0($a0) #lay ki tu trong chuoi
+	beq $t0, $zero, check_brackets_end
+	addi $t1, $t1, 1 #vi tri ki tu hien tai
+	addi $a0, $a0, 1 #ki tu ke tiep cho vong lap tiep theo
+	li $t2, '('
+	beq $t2, $t0, push
+	li $t2, '['
+	beq $t2, $t0, push
+	li $t2, '{'
+	beq $t2, $t0, push
+	li $t3, ')'
+	beq $t3, $t0, ngoac_tron
+	li $t3, ']'
+	beq $t3, $t0, ngoac_vuong
+	li $t3, '}'
+	beq $t3, $t0, ngoac_nhon
+	j loop
+push:
+	addi $sp, $sp, -4
+	sw $t0, 0($sp)
+	j loop
+ngoac_tron:
+	li $t4, '('
+	j check_brackets_close
+ngoac_vuong:
+	li $t4, '['
+	j check_brackets_close
+ngoac_nhon:
+	li $t4, '{'
+	j check_brackets_close
+check_brackets_close:
+	beq $sp, $t9, err2 #ma loi 2
+	lw $t3, 0($sp)
+	bne $t4, $t3, err1 #ma loi 1
+	addi $sp, $sp, 4 #khong loi thi pop
+	j loop
+err2:
+	move $v0, $t1
+	li $v1, 2
+	j check_brackets_exit
+err1:
+	move $v0, $t1
+	li $v1, 1
+	j check_brackets_exit
+check_brackets_end:
+	beq $sp, $t9, check_brackets_ok
+	addi $v0, $t1, 1 #ma loi 3
+	li $v1, 3
+	j check_brackets_exit
+check_brackets_ok:
+	li $v0, 0
+	li $v1, 0
+check_brackets_exit:
+	move $sp, $t9
+	jr $ra
+	
