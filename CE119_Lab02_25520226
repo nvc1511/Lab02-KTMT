@@ -1,0 +1,134 @@
+.data
+arr1: .word 1, 9, 3, 4, 8, 0, 2, 8, 1, 4, 10, 9
+grade_tab: .byte 0, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3
+	.align 2
+hist: .word 0,0,0,0
+str1: .asciiz "min="
+str2: .asciiz "max="
+str3: .asciiz "g0="
+str4: .asciiz "g1="
+str5: .asciiz "g2="
+str6: .asciiz "g3="
+str7: .asciiz " "
+str8: .asciiz "\n"
+    .text
+main:
+   
+    la $a0, arr1            # a0 = dia chi mang arr1
+    li $a1, 12              # a1 = n
+    jal stats               # thu tuc stats
+    add $s0, $zero, $v0     # luu ngay: min
+    add $s1, $zero, $v1     # luu ngay: max
+
+   
+    la $a0, arr1            # a0 = dia chi mang arr1
+    li $a1, 12              # a1 = n
+    la $a2, grade_tab       # a2 = bang quy doi diem 
+    la $a3, hist            # a3 = mang dem hist
+    jal histogram           # thu tuc histogram
+    la $s2, hist            # luu dia chi mang hist
+
+    li $v0, 4
+    la $a0, str1
+    syscall
+    li $v0, 1
+    add $a0, $zero, $s0     # in so nho nhat
+    syscall
+    li $v0, 4
+    la $a0, str7
+    syscall
+    li $v0, 4
+    la $a0, str2
+    syscall
+    li $v0, 1
+    add $a0, $zero, $s1     # in so lon nhat
+    syscall
+    li $v0, 4
+    la $a0, str8
+    syscall
+    li $v0, 4
+    la $a0, str3
+    syscall
+    li $v0, 1
+    lw $a0, 0($s2)          # g0
+    syscall
+    li $v0, 4
+    la $a0, str7
+    syscall
+    li $v0, 4
+    la $a0, str4
+    syscall
+    li $v0, 1
+    lw $a0, 4($s2)          # g1
+    syscall
+    li $v0, 4
+    la $a0, str7
+    syscall
+    li $v0, 4
+    la $a0, str5
+    syscall
+    li $v0, 1
+    lw $a0, 8($s2)          # g2
+    syscall
+    li $v0, 4
+    la $a0, str7
+    syscall
+    li $v0, 4
+    la $a0, str6
+    syscall
+    li $v0, 1
+    lw $a0, 12($s2)         # g3
+    syscall
+    li $v0, 4
+    la $a0, str8
+    syscall
+    li $v0, 10
+    syscall
+
+stats: # dau vao: a0 - mang arr1; a1 - n
+       # dau ra : v0 - so nho nhat; v1 - so lon nhat
+    li $v0, 0x7FFFFFFF      # khoi tao min
+    li $v1, 0x80000000      # khoi tao max
+loop:
+    beq $a1, $zero, stats_done
+    lw $t0, 0($a0)
+    slt $t1, $t0, $v0
+    bne $t1, $zero, min
+    slt $t2, $v1, $t0
+    bne $t2, $zero, max
+    addi $a0, $a0, 4
+    addi $a1, $a1, -1
+    j loop
+min:
+    add $v0, $zero, $t0
+condition2:
+    slt $t2, $v1, $t0
+    bne $t2, $zero, max
+    addi $a0, $a0, 4
+    addi $a1, $a1, -1
+    j loop
+max:
+    add $v1, $zero, $t0
+    addi $a0, $a0, 4
+    addi $a1, $a1, -1
+    j loop
+stats_done:
+    jr $ra
+
+histogram: # dau vao: a0 - mang arr1; a1 - n; a2 - grade_tab; a3 - hist
+           # khong co gia tri tra ve
+loop2:
+    beq $a1, $zero, histogram_done
+    lw $t0, 0($a0)
+    add $t0, $t0, $a2       # &grade_tab[s]
+    lbu $t1, 0($t0)         # tra bang
+    sll $t1, $t1, 2      
+    add $t1, $t1, $a3       # &hist[grade]
+    lw $t2, 0($t1)
+    addi $t2, $t2, 1
+    sw $t2, 0($t1)
+    addi $a0, $a0, 4        # da doi tu add sang addi
+    addi $a1, $a1, -1
+    j loop2
+histogram_done:
+    jr $ra
